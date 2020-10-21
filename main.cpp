@@ -19,6 +19,8 @@ vector<vector<unsigned> > vecf;
 
 
 // You will need more global variables to implement color and position changes
+uint8_t currentColor = 0;
+const uint8_t maxColors = 4;
 
 // These are convenience functions which allow us to call OpenGL 
 // methods on Vec3d objects
@@ -39,6 +41,7 @@ void keyboardFunc( unsigned char key, int x, int y )
         break;
     case 'c':
         // add code to change color here
+        currentColor = (currentColor + 1) % maxColors;
 		cout << "Unhandled key press " << key << "." << endl; 
         break;
     default:
@@ -98,13 +101,15 @@ void drawScene(void)
     // Set material properties of object
 
 	// Here are some colors you might use - feel free to add more
-    GLfloat diffColors[4][4] = { {0.5, 0.5, 0.9, 1.0},
-                                 {0.9, 0.5, 0.5, 1.0},
-                                 {0.5, 0.9, 0.3, 1.0},
-                                 {0.3, 0.8, 0.9, 1.0} };
+    GLfloat diffColors[maxColors][maxColors] = { 
+                                  {0.5, 0.5, 0.9, 1.0},
+                                  {0.9, 0.5, 0.5, 1.0},
+                                  {0.5, 0.9, 0.3, 1.0},
+                                  {0.3, 0.8, 0.9, 1.0} 
+    };
     
 	// Here we use the first color entry as the diffuse color
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffColors[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffColors[currentColor]);
 
 	// Define specular color and shininess
     GLfloat specColor[] = {1.0, 1.0, 1.0, 1.0};
