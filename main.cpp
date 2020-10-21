@@ -33,6 +33,23 @@ inline void glVertex(const Vector3f &a)
 inline void glNormal(const Vector3f &a) 
 { glNormal3fv(a); }
 
+void draw3DObject()
+{
+    glPushMatrix();
+    glRotatef(rotationAngle, 0.f, 1.f, 0.f);
+    for (auto face : vecf)
+    {
+        glBegin(GL_TRIANGLES);
+        glNormal3d(vecn[face[2] - 1][0], vecn[face[2] - 1][1], vecn[face[2] - 1][2]);
+        glVertex3d(vecv[face[0] - 1][0], vecv[face[0] - 1][1], vecv[face[0] - 1][2]);
+        glNormal3d(vecn[face[5] - 1][0], vecn[face[5] - 1][1], vecn[face[5] - 1][2]);
+        glVertex3d(vecv[face[3] - 1][0], vecv[face[3] - 1][1], vecv[face[3] - 1][2]);
+        glNormal3d(vecn[face[8] - 1][0], vecn[face[8] - 1][1], vecn[face[8] - 1][2]);
+        glVertex3d(vecv[face[6] - 1][0], vecv[face[6] - 1][1], vecv[face[6] - 1][2]);
+        glEnd();
+    }
+    glPopMatrix();
+}
 
 // This function is called whenever a "Normal" key press is received.
 void keyboardFunc( unsigned char key, int x, int y )
@@ -45,7 +62,7 @@ void keyboardFunc( unsigned char key, int x, int y )
     case 'c':
         // add code to change color here
         currentColor = (currentColor + 1) % maxColors;
-		cout << "Unhandled key press " << key << "." << endl; 
+		cout << "Handled key press " << key << "." << endl; 
         break;
     default:
         cout << "Unhandled key press " << key << "." << endl;        
@@ -136,13 +153,14 @@ void drawScene(void)
 
 	// This GLUT method draws a teapot.  You should replace
 	// it with code which draws the object you loaded.
-	glutSolidTeapot(1.0);
+	//glutSolidTeapot(1.0);
+    draw3DObject();
     
     // Dump the image to the screen.
     glutSwapBuffers();
 
-
 }
+
 
 // Initialize OpenGL's rendering modes
 void initRendering()
@@ -170,10 +188,64 @@ void reshapeFunc(int w, int h)
     gluPerspective(50.0, 1.0, 1.0, 100.0);
 }
 
+void parseFace(std::vector<unsigned>& face, std::string s)
+{
+    string delimiter = "/";
+    std::string token;
+
+    size_t pos = 0;
+
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        token = s.substr(0, pos);
+        std::cout << token << std::endl;
+        face.push_back(std::stoi(token));
+        s.erase(0, pos + delimiter.length());
+    }
+
+    face.push_back(std::stoi(s));
+
+}
+
 void loadInput()
 {
-	// load the OBJ file here
+    const int MAX_BUFFER_SIZE = 128;
+    char buffer[MAX_BUFFER_SIZE];
+    while (cin.getline(buffer, MAX_BUFFER_SIZE))
+    {
+        stringstream ss(buffer);
+        string s;
+
+        ss >> s;
+        if (s == "v")
+        {
+            Vector3f v;
+            ss >> v[0] >> v[1] >> v[2];
+
+            vecv.push_back(v);
+        }
+
+        if (s == "vn")
+        {
+            Vector3f v;
+            ss >> v[0] >> v[1] >> v[2];
+            vecn.push_back(v);
+        }
+
+        if (s == "f")
+        {
+            vector<unsigned> face;
+            string group;
+            while (ss >> group)
+            {
+                parseFace(face, group);
+            }
+
+            vecf.push_back(face);
+        }
+    }
 }
+
 
 // Main routine.
 // Set up OpenGL, define the callbacks and start the main loop
