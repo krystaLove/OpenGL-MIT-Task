@@ -25,6 +25,9 @@ const uint8_t maxColors = 4;
 Vector3f lightPos = { 1.f, 1.f, 5.f };
 const float lightPosChangeValuePerKey = 0.5f;
 
+bool isRotating = false;
+float rotationAngle = 0.f;
+
 // These are convenience functions which allow us to call OpenGL 
 // methods on Vec3d objects
 inline void glVertex(const Vector3f &a) 
@@ -63,6 +66,11 @@ void keyboardFunc( unsigned char key, int x, int y )
         // add code to change color here
         currentColor = (currentColor + 1) % maxColors;
 		cout << "Handled key press " << key << "." << endl; 
+        break;
+    case 'r':
+        // add code to change color here
+        isRotating = !isRotating;
+        cout << "Handled key press " << key << "." << endl;
         break;
     default:
         cout << "Unhandled key press " << key << "." << endl;        
@@ -159,6 +167,21 @@ void drawScene(void)
     // Dump the image to the screen.
     glutSwapBuffers();
 
+}
+
+void update(int)
+{
+    if (isRotating)
+    {
+        rotationAngle += 2.0f;
+        if (rotationAngle > 360.f)
+        {
+            rotationAngle -= 360;
+        }
+    }
+
+    glutPostRedisplay();
+    glutTimerFunc(25, update, 0);
 }
 
 
@@ -275,6 +298,8 @@ int main( int argc, char** argv )
 
     // Call this whenever window needs redrawing
     glutDisplayFunc( drawScene );
+
+    glutTimerFunc(25, update, 0);
 
     // Start the main loop.  glutMainLoop never returns.
     glutMainLoop( );
