@@ -22,6 +22,9 @@ vector<vector<unsigned> > vecf;
 uint8_t currentColor = 0;
 const uint8_t maxColors = 4;
 
+Vector3f lightPos = { 1.f, 1.f, 5.f };
+const float lightPosChangeValuePerKey = 0.5f;
+
 // These are convenience functions which allow us to call OpenGL 
 // methods on Vec3d objects
 inline void glVertex(const Vector3f &a) 
@@ -56,23 +59,25 @@ void keyboardFunc( unsigned char key, int x, int y )
 // Right now, it's handling the arrow keys.
 void specialFunc( int key, int x, int y )
 {
+    auto val = lightPosChangeValuePerKey;
+
     switch ( key )
     {
     case GLUT_KEY_UP:
-        // add code to change light position
-		cout << "Unhandled key press: up arrow." << endl;
+        lightPos[1] += val;
+		cout << "Handled key press: up arrow." << endl;
 		break;
     case GLUT_KEY_DOWN:
-        // add code to change light position
-		cout << "Unhandled key press: down arrow." << endl;
+        lightPos[1] -= val;
+		cout << "Handled key press: down arrow." << endl;
 		break;
     case GLUT_KEY_LEFT:
-        // add code to change light position
-		cout << "Unhandled key press: left arrow." << endl;
+        lightPos[0] -= val;
+		cout << "Handled key press: left arrow." << endl;
 		break;
     case GLUT_KEY_RIGHT:
-        // add code to change light position
-		cout << "Unhandled key press: right arrow." << endl;
+        lightPos[0] += val;
+		cout << "Handled key press: right arrow." << endl;
 		break;
     }
 
@@ -124,7 +129,7 @@ void drawScene(void)
     // Light color (RGBA)
     GLfloat Lt0diff[] = {1.0,1.0,1.0,1.0};
     // Light position
-	GLfloat Lt0pos[] = {1.0f, 1.0f, 5.0f, 1.0f};
+    GLfloat Lt0pos[] = { lightPos[0], lightPos[1], lightPos[2], 1.0f };
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, Lt0diff);
     glLightfv(GL_LIGHT0, GL_POSITION, Lt0pos);
