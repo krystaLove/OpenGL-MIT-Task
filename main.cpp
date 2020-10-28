@@ -39,6 +39,8 @@ float zoomWeight = 0.0f;
 bool leftButton = false;
 float downX = 0, downY = 0;
 
+GLuint objectListId;
+
 // Here are some colors you might use - feel free to add more
 const GLfloat diffColors[maxColors][4] = {
                               {0.5, 0.5, 0.9, 1.0},
@@ -210,7 +212,7 @@ void drawScene(void)
     glPushMatrix();
     glRotatef((preRotationX + rotationX), 0.0f, 1.0f, 0.0f);
     glRotatef((preRotationY + rotationY), 1.0f, 0.0f, 0.0f);
-    draw3DObject();
+    glCallList(objectListId);
     glPopMatrix();
     
     // Dump the image to the screen.
@@ -251,6 +253,16 @@ void update(int)
 
     glutPostRedisplay();
     glutTimerFunc(25, update, 0);
+}
+
+void init()
+{
+    objectListId = glGenLists(1);
+
+    glNewList(objectListId, GL_COMPILE);
+         draw3DObject();
+    glEndList();
+
 }
 
 
@@ -345,7 +357,7 @@ int main( int argc, char** argv )
 {
     loadInput();
 
-    glutInit(&argc,argv);
+    glutInit(&argc,argv); 
 
     // We're going to animate it, so double buffer 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
@@ -357,6 +369,8 @@ int main( int argc, char** argv )
 
     // Initialize OpenGL parameters.
     initRendering();
+
+    init();
 
     // Set up callback functions for key presses
     glutKeyboardFunc(keyboardFunc); // Handles "normal" ascii symbols
