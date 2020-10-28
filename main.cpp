@@ -6,6 +6,8 @@
 #include "vecmath.h"
 using namespace std;
 
+const int WINDOW_SIZE = 360;
+
 // Globals
 
 // This is the list of points (3D vectors)
@@ -27,10 +29,18 @@ Vector3f lightPos = { 1.f, 1.f, 5.f };
 const float lightPosChangeValuePerKey = 0.5f;
 
 bool isRotating = false;
-float rotationAngle = 0.f;
+float preRotationX = 0, preRotationY = 0;
+float rotationX = 0, rotationY = 0;
+
+bool isFirstDown = true;
+
+float zoomWeight = 0.0f;
+
+bool leftButton = false;
+float downX = 0, downY = 0;
 
 // Here are some colors you might use - feel free to add more
-GLfloat diffColors[maxColors][4] = {
+const GLfloat diffColors[maxColors][4] = {
                               {0.5, 0.5, 0.9, 1.0},
                               {0.9, 0.5, 0.5, 1.0},
                               {0.5, 0.9, 0.3, 1.0},
@@ -50,8 +60,7 @@ inline void glNormal(const Vector3f &a)
 
 void draw3DObject()
 {
-    glPushMatrix();
-    glRotatef(rotationAngle, 0.f, 1.f, 0.f);
+ 
     for (auto face : vecf)
     {
         glBegin(GL_TRIANGLES);
@@ -63,7 +72,7 @@ void draw3DObject()
         glVertex3d(vecv[face[6] - 1][0], vecv[face[6] - 1][1], vecv[face[6] - 1][2]);
         glEnd();
     }
-    glPopMatrix();
+
 }
 
 // This function is called whenever a "Normal" key press is received.
@@ -123,6 +132,34 @@ void specialFunc( int key, int x, int y )
     glutPostRedisplay();
 }
 
+void mouseFunc(int button, int state, int x, int y)
+{
+    float downX = x, downY = y;
+
+    leftButton = (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN);
+}
+
+void mouseWheelFunc(int button, int dir, int x, int y)
+{
+    if (dir > 0)
+    {
+        zoomWeight++;
+    }
+    else
+    {
+        zoomWeight--;
+    }
+}
+
+void motionCallback(int x, int y)
+{
+    if (leftButton)
+    {
+        rotationX = (x - downX) / 4.0;
+        rotationY = (downY - y) / 4.0;
+    } 
+}
+
 // This function is responsible for displaying the object.
 void drawScene(void)
 {
@@ -134,6 +171,8 @@ void drawScene(void)
     // Rotate the image
     glMatrixMode( GL_MODELVIEW );  // Current matrix affects objects positions
     glLoadIdentity();              // Initialize to the identity
+
+    glTranslatef(0.0f, 0.0f, zoomWeight);
 
     // Position the camera at [0,0,5], looking at [0,0,0],
     // with [0,1,0] as the up direction.
@@ -167,8 +206,12 @@ void drawScene(void)
 	// This GLUT method draws a teapot.  You should replace
 	// it with code which draws the object you loaded.
 	//glutSolidTeapot(1.0);
- 
+    
+    glPushMatrix();
+    glRotatef((preRotationX + rotationX), 0.0f, 1.0f, 0.0f);
+    glRotatef((preRotationY + rotationY), 1.0f, 0.0f, 0.0f);
     draw3DObject();
+    glPopMatrix();
     
     // Dump the image to the screen.
     glutSwapBuffers();
@@ -197,14 +240,14 @@ void update(int)
 
     blendColor();
 
-    if (isRotating)
+    /*if (isRotating)
     {
         rotationAngle += 2.0f;
         if (rotationAngle > 360.f)
         {
             rotationAngle -= 360;
         }
-    }
+    }*/
 
     glutPostRedisplay();
     glutTimerFunc(25, update, 0);
@@ -309,7 +352,7 @@ int main( int argc, char** argv )
 
     // Initial parameters for window position and size
     glutInitWindowPosition( 60, 60 );
-    glutInitWindowSize( 360, 360 );
+    glutInitWindowSize( WINDOW_SIZE, WINDOW_SIZE);
     glutCreateWindow("Assignment 0");
 
     // Initialize OpenGL parameters.
@@ -318,6 +361,9 @@ int main( int argc, char** argv )
     // Set up callback functions for key presses
     glutKeyboardFunc(keyboardFunc); // Handles "normal" ascii symbols
     glutSpecialFunc(specialFunc);   // Handles "special" keyboard keys
+    glutMouseFunc(mouseFunc);
+    glutMouseWheelFunc(mouseWheelFunc);
+    glutMotionFunc(motionCallback);
 
      // Set up the callback function for resizing windows
     glutReshapeFunc( reshapeFunc );
