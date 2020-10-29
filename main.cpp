@@ -19,7 +19,6 @@ vector<Vector3f> vecn;
 // This is the list of faces (indices into vecv and vecn)
 vector<vector<unsigned> > vecf;
 
-
 // You will need more global variables to implement color and position changes
 uint8_t currentColorId = 0;
 uint8_t lastPickedColor = 0;
@@ -29,10 +28,8 @@ Vector3f lightPos = { 1.f, 1.f, 5.f };
 const float lightPosChangeValuePerKey = 0.5f;
 
 bool isRotating = false;
-float preRotationX = 0, preRotationY = 0;
 float rotationX = 0, rotationY = 0;
-
-bool isFirstDown = true;
+float rotationAngleForAnimation = 0;
 
 float zoomWeight = 0.0f;
 
@@ -50,6 +47,7 @@ const GLfloat diffColors[maxColors][4] = {
 };
 
 GLfloat currentColor[4] = { 0.5, 0.5, 0.9, 1.0 };
+GLfloat objectRotation[3] = { 0.0, 0.0, 0.0 };
 
 
 // These are convenience functions which allow us to call OpenGL 
@@ -75,6 +73,13 @@ void draw3DObject()
         glEnd();
     }
 
+}
+
+void saveNewRotation()
+{
+    objectRotation[0] += rotationX;
+    objectRotation[1] += rotationY;
+    rotationX = rotationY = 0;
 }
 
 // This function is called whenever a "Normal" key press is received.
@@ -136,29 +141,40 @@ void specialFunc( int key, int x, int y )
 
 void mouseFunc(int button, int state, int x, int y)
 {
-    float downX = x, downY = y;
+    downX = x, downY = y;
+
+    std::cout << "Clicked at: " << downX << " " << downY << std::endl;
 
     leftButton = (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN);
+
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+        saveNewRotation();
+    }
 }
+
+
 
 void mouseWheelFunc(int button, int dir, int x, int y)
 {
     if (dir > 0)
     {
-        zoomWeight++;
+        zoomWeight += 0.1f;
     }
     else
     {
-        zoomWeight--;
+        zoomWeight -= 0.1f;
     }
 }
 
 void motionCallback(int x, int y)
 {
+    std::cout << "Motion at: " << x << " " << y << std::endl;
     if (leftButton)
     {
-        rotationX = (x - downX) / 4.0;
-        rotationY = (downY - y) / 4.0;
+        rotationY = (x - downX) / 4.0f;
+        rotationX = (y - downY) / 4.0f;
+
+        std::cout << "Rotations: " << rotationX << " " << rotationY << std::endl;
     } 
 }
 
@@ -210,14 +226,22 @@ void drawScene(void)
 	//glutSolidTeapot(1.0);
     
     glPushMatrix();
-    glRotatef((preRotationX + rotationX), 0.0f, 1.0f, 0.0f);
-    glRotatef((preRotationY + rotationY), 1.0f, 0.0f, 0.0f);
-    glCallList(objectListId);
+        glRotatef(objectRotation[0] + rotationX, 1.0f, 0.0f, 0.0f);
+        glRotatef(objectRotation[1] + rotationY + rotationAngleForAnimation, 0.0f, 1.0f, 0.0f);
+        glCallList(objectListId);
     glPopMatrix();
     
     // Dump the image to the screen.
     glutSwapBuffers();
+}
 
+void rotationAnimation()
+{
+    rotationAngleForAnimation += 2.0f;
+    if (rotationAngleForAnimation > 360.f)
+    {
+        rotationAngleForAnimation -= 360;
+    }
 }
 
 void blendColor()
@@ -242,14 +266,9 @@ void update(int)
 
     blendColor();
 
-    /*if (isRotating)
-    {
-        rotationAngle += 2.0f;
-        if (rotationAngle > 360.f)
-        {
-            rotationAngle -= 360;
-        }
-    }*/
+   if (isRotating){
+       rotationAnimation();
+   }
 
     glutPostRedisplay();
     glutTimerFunc(25, update, 0);
@@ -289,7 +308,7 @@ void reshapeFunc(int w, int h)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     // 50 degree fov, uniform aspect ratio, near = 1, far = 100
-    gluPerspective(50.0, 1.0, 1.0, 100.0);
+    gluPerspective(60.0, 1.0, 1.0, 100.0);
 }
 
 void parseFace(std::vector<unsigned>& face, std::string s)
