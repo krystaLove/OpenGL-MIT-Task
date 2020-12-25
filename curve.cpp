@@ -56,14 +56,12 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
             CurvePoint point;
 
             float t = static_cast<float>(it) / steps;
-            
+
             point.V = Vector3f(
                 bezier(P[pointIdx * 3].x(), P[pointIdx * 3 + 1].x(), P[pointIdx * 3 + 2].x(), P[pointIdx * 3 + 3].x(), t),
                 bezier(P[pointIdx * 3].y(), P[pointIdx * 3 + 1].y(), P[pointIdx * 3 + 2].y(), P[pointIdx * 3 + 3].y(), t),
                 bezier(P[pointIdx * 3].z(), P[pointIdx * 3 + 1].z(), P[pointIdx * 3 + 2].z(), P[pointIdx * 3 + 3].z(), t)
             );
-
-            std::cout << point.V.z() << std::endl;
 
             point.T = Vector3f(
                 bezierTangent(P[pointIdx * 3].x(), P[pointIdx * 3 + 1].x(), P[pointIdx * 3 + 2].x(), P[pointIdx * 3 + 3].x(), t),
@@ -132,10 +130,45 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
         exit( 0 );
     }
 
-    // TODO:
-    // It is suggested that you implement this function by changing
-    // basis from B-spline to Bezier.  That way, you can just call
-    // your evalBezier function.
+
+    Curve curve;
+    curve.reserve(P.size());
+
+    for (int pointIdx = 0; pointIdx < P.size() - 3; ++pointIdx) {
+
+
+        for (int it = 0; it < steps; ++it) {
+            CurvePoint point;
+
+            float t = static_cast<float>(it) / steps;
+
+            point.V = Vector3f(
+                bSpline(P[pointIdx].x(), P[pointIdx + 1].x(), P[pointIdx + 2].x(), P[pointIdx + 3].x(), t),
+                bSpline(P[pointIdx].y(), P[pointIdx + 1].y(), P[pointIdx + 2].y(), P[pointIdx + 3].y(), t),
+                bSpline(P[pointIdx].z(), P[pointIdx + 1].z(), P[pointIdx + 2].z(), P[pointIdx + 3].z(), t)
+            );
+
+            point.T = Vector3f(
+                bSplineTangent(P[pointIdx].x(), P[pointIdx + 1].x(), P[pointIdx + 2].x(), P[pointIdx + 3].x(), t),
+                bSplineTangent(P[pointIdx].y(), P[pointIdx + 1].y(), P[pointIdx + 2].y(), P[pointIdx + 3].y(), t),
+                bSplineTangent(P[pointIdx].z(), P[pointIdx + 1].z(), P[pointIdx + 2].z(), P[pointIdx + 3].z(), t)
+            ).normalized();
+
+            if (pointIdx + it == 0) {
+                point.N = Vector3f::cross(Vector3f(0, 0, 1), point.T).normalized();
+            }
+            else {
+                point.N = Vector3f::cross(curve[steps * pointIdx + it - 1].B, point.T).normalized();
+            }
+
+            point.B = Vector3f::cross(point.T, point.N).normalized();
+
+            curve.push_back(point);
+        }
+    }
+
+    curve.push_back(curve[0]);
+
 
     std::cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
@@ -146,10 +179,36 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
     }
 
     std::cerr << "\t>>> Steps (type steps): " << steps << endl;
-    std::cerr << "\t>>> Returning empty curve." << endl;
 
-    // Return an empty curve right now.
-    return Curve();
+    return curve;
+}
+
+float bSpline(float A, float B, float C, float D, float t) {
+
+    float s = 1.0f - t;
+    float q = 0.0f;
+
+    q += s * s * s * A;
+    q += (3 * t * t * t - 6 * t * t  + 4) * B;
+    q += (-3 * t * t * t + 3 * t * t + 3 * t  + 1) * C;
+    q += t * t * t * D;
+    q = (1.0f / 6.0f) * q;
+
+    return q;
+}
+
+float bSplineTangent(float A, float B, float C, float D, float t) {
+    float s = 1.0f - t;
+    float q = 0.0f;
+
+    q += -3 * s * s * A;
+    q += -3 * (9 * t * t - 12 * t) * B;
+    q += (-1.0f / 6.0f) * (-9 * t * t + 6 * t + 3) * C;
+    q += 3 * t * t * D;
+
+    q = (1.0f / 6.0f) * q;
+
+    return q;
 }
 
 Curve evalCircle( float radius, unsigned steps )

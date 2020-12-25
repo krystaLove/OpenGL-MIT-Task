@@ -44,6 +44,9 @@ Curve evalCircle( float radius, unsigned steps);
 float bezierTangent(float A, float B, float C, float D, float t);
 float bezier(float A, float B, float C, float D, float t);
 
+float bSpline(float A, float B, float C, float D, float t);
+float bSplineTangent(float A, float B, float C, float D, float t);
+
 
 // Draw the curve and (optionally) the associated coordinate frames
 // If framesize == 0, then no frames are drawn.  Otherwise, drawn.
