@@ -25,7 +25,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     // Check
     if( P.size() < 4 || P.size() % 3 != 1 )
     {
-        cerr << "evalBezier must be called with 3n+1 control points." << endl;
+        std::cerr << "evalBezier must be called with 3n+1 control points." << endl;
         exit( 0 );
     }
 
@@ -46,19 +46,81 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     // receive have G1 continuity.  Otherwise, the TNB will not be
     // be defined at points where this does not hold.
 
-    cerr << "\t>>> evalBezier has been called with the following input:" << endl;
+    Curve curve;
+    curve.reserve(P.size() / 4 + 1);
 
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < P.size(); ++i )
-    {
-        cerr << "\t>>> " << P[i] << endl;
+    for (int pointIdx = 0; pointIdx * 3 + 3 < P.size(); ++pointIdx) {
+     
+
+        for (int it = 0; it < steps; ++it) {
+            CurvePoint point;
+
+            float t = static_cast<float>(it) / steps;
+            
+            point.V = Vector3f(
+                bezier(P[pointIdx * 3].x(), P[pointIdx * 3 + 1].x(), P[pointIdx * 3 + 2].x(), P[pointIdx * 3 + 3].x(), t),
+                bezier(P[pointIdx * 3].y(), P[pointIdx * 3 + 1].y(), P[pointIdx * 3 + 2].y(), P[pointIdx * 3 + 3].y(), t),
+                bezier(P[pointIdx * 3].z(), P[pointIdx * 3 + 1].z(), P[pointIdx * 3 + 2].z(), P[pointIdx * 3 + 3].z(), t)
+            );
+
+            std::cout << point.V.z() << std::endl;
+
+            point.T = Vector3f(
+                bezierTangent(P[pointIdx * 3].x(), P[pointIdx * 3 + 1].x(), P[pointIdx * 3 + 2].x(), P[pointIdx * 3 + 3].x(), t),
+                bezierTangent(P[pointIdx * 3].y(), P[pointIdx * 3 + 1].y(), P[pointIdx * 3 + 2].y(), P[pointIdx * 3 + 3].y(), t),
+                bezierTangent(P[pointIdx * 3].z(), P[pointIdx * 3 + 1].z(), P[pointIdx * 3 + 2].z(), P[pointIdx * 3 + 3].z(), t)
+            ).normalized();
+
+            if (pointIdx + it == 0) {
+                point.N = Vector3f::cross(Vector3f(0, 0, 1), point.T).normalized();
+            } else {
+                point.N = Vector3f::cross(curve[steps * pointIdx + it - 1].B, point.T).normalized();
+            }
+
+            point.B = Vector3f::cross(point.T, point.N).normalized();
+
+            curve.push_back(point);
+        }   
     }
 
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
+    curve.push_back(curve[0]);
 
-    // Right now this will just return this empty curve.
-    return Curve();
+    std::cerr << "\t>>> evalBezier has been called with the following input:" << endl;
+
+    std::cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
+    for( unsigned i = 0; i < P.size(); ++i )
+    {
+        std::cerr << "\t>>> " << P[i] << endl;
+    }
+
+    std::cerr << "\t>>> Steps (type steps): " << steps << endl;
+
+    return curve;
+}
+
+float bezier(float A, float B, float C, float D, float t) {
+    
+    float s = 1.0f - t;
+    float q = 0.0f;
+
+    q += s * s * s * A;
+    q += 3 * t * s * s * B;
+    q += 3 * t * t * s * C;
+    q += t * t * t * D;
+
+    return q;
+}
+
+float bezierTangent(float A, float B, float C, float D, float t) {
+    float s = 1.0f - t;
+    float q = 0.0f;
+
+    q += (-3.0f) * s * s * A;
+    q += (3.0f * s * s - 6.0f * t * s) * B;
+    q += (6.0f * t * s - 3.0f * t * t) * C;
+    q += 3.0f * t * t * D;
+
+    return q;
 }
 
 Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
@@ -66,7 +128,7 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
     // Check
     if( P.size() < 4 )
     {
-        cerr << "evalBspline must be called with 4 or more control points." << endl;
+        std::cerr << "evalBspline must be called with 4 or more control points." << endl;
         exit( 0 );
     }
 
@@ -75,16 +137,16 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
     // basis from B-spline to Bezier.  That way, you can just call
     // your evalBezier function.
 
-    cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
+    std::cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
+    std::cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
     for( unsigned i = 0; i < P.size(); ++i )
     {
-        cerr << "\t>>> " << P[i] << endl;
+        std::cerr << "\t>>> " << P[i] << endl;
     }
 
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
+    std::cerr << "\t>>> Steps (type steps): " << steps << endl;
+    std::cerr << "\t>>> Returning empty curve." << endl;
 
     // Return an empty curve right now.
     return Curve();
