@@ -47,25 +47,7 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
         }
     }
 
-    for (int i = 0; i < steps; i++)
-    {
-        for (int j = 0; j < profile.size() - 1; j++)
-        {
-            int ff = i * profile.size() + j;
-            int sf = i * profile.size() + j + 1;
-            int fs = (i + 1) * profile.size() + j;
-            int ss = (i + 1) * profile.size() + j + 1;
-
-            if (i == steps - 1)
-            {
-                fs = j;
-                ss = j + 1;
-            }
-            
-            surface.VF.emplace_back(ff, sf, fs);
-            surface.VF.emplace_back(fs, sf, ss);
-        }
-    }
+    meshPolygons(surface, steps, profile.size());
  
     return surface;
 }
@@ -80,11 +62,54 @@ Surface makeGenCyl(const Curve &profile, const Curve &sweep )
         exit(0);
     }
 
+    for (int i = 0; i < sweep.size(); i++)
+    {
+
+        Matrix3f ts = Matrix3f(sweep[i].N, sweep[i].B, sweep[i].T);
+
+        for (int j = 0; j < profile.size(); j++)
+        {
+
+            Vector3f xyz = ts * profile[j].V;
+            Vector3f normal = ts * profile[j].N;
+
+            xyz += sweep[i].V;
+            
+            surface.VV.push_back(xyz);
+            surface.VN.push_back(-normal.normalized());
+        }
+    }
+   
+    meshPolygons(surface, sweep.size(), profile.size());
+
     // TODO: Here you should build the surface.  See surf.h for details.
 
     cerr << "\t>>> makeGenCyl called (but not implemented).\n\t>>> Returning empty surface." <<endl;
 
     return surface;
+}
+
+void meshPolygons(Surface& surface, uint32_t size, uint32_t profileSize) {
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < profileSize - 1; j++)
+        {
+            int ff = i * profileSize + j;
+            int sf = i * profileSize + j + 1;
+            int fs = (i + 1) * profileSize + j;
+            int ss = (i + 1) * profileSize + j + 1;
+
+            if (i == size - 1)
+            {
+                fs = j;
+                ss = j + 1;
+            }
+
+            surface.VF.emplace_back(ff, sf, fs);
+            surface.VF.emplace_back(fs, sf, ss);
+        }
+    }
 }
 
 void drawSurface(const Surface &surface, bool shaded)

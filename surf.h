@@ -37,7 +37,7 @@ Surface makeGenCyl( const Curve& profile,
 
 void outputObjFile( std::ostream& out, const Surface& surface );
 
-
+void meshPolygons(Surface& surface, uint32_t size, uint32_t profileSize);
 
 
 
