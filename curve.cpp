@@ -167,8 +167,6 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
         }
     }
 
-    curve.push_back(curve[0]);
-
 
     std::cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
@@ -202,8 +200,8 @@ float bSplineTangent(float A, float B, float C, float D, float t) {
     float q = 0.0f;
 
     q += -3 * s * s * A;
-    q += -3 * (9 * t * t - 12 * t) * B;
-    q += (-1.0f / 6.0f) * (-9 * t * t + 6 * t + 3) * C;
+    q += (9 * t * t - 12 * t) * B;
+    q += (-9 * t * t + 6 * t + 3) * C;
     q += 3 * t * t * D;
 
     q = (1.0f / 6.0f) * q;
