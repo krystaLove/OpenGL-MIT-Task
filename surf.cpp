@@ -1,4 +1,4 @@
-#include "surf.h"
+﻿#include "surf.h"
 #include "extra.h"
 using namespace std;
 
@@ -30,8 +30,42 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
     }
 
     // TODO: Here you should build the surface.  See surf.h for details.
+    for (int i = 0; i < steps; i++)
+    {
+        for (int j = 0; j < profile.size(); j++)
+        {
+            float angle = 2.0f * M_PI * i  / (float) steps;
+            float x = profile[j].V[0];
+            float y = profile[j].V[1];
+            float z = profile[j].V[2];
 
-    cerr << "\t>>> makeSurfRev called (but not implemented).\n\t>>> Returning empty surface." << endl;
+            Vector3f v = Matrix3f::rotateY(angle) * profile[j].V;
+            Vector3f n = Matrix3f::rotateY(angle) * profile[j].N;
+
+            surface.VV.push_back(v);
+            surface.VN.push_back(-n.normalized());
+        }
+    }
+
+    for (int i = 0; i < steps; i++)
+    {
+        for (int j = 0; j < profile.size() - 1; j++)
+        {
+            int ff = i * profile.size() + j;
+            int sf = i * profile.size() + j + 1;
+            int fs = (i + 1) * profile.size() + j;
+            int ss = (i + 1) * profile.size() + j + 1;
+
+            if (i == steps - 1)
+            {
+                fs = j;
+                ss = j + 1;
+            }
+            
+            surface.VF.emplace_back(ff, sf, fs);
+            surface.VF.emplace_back(fs, sf, ss);
+        }
+    }
  
     return surface;
 }
