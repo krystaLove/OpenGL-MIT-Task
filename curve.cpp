@@ -167,6 +167,7 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
         }
     }
 
+    curve.push_back(curve[0]);
 
     std::cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
